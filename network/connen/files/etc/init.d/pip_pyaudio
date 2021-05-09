@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+
+START=91
+STOP=91
+
+boot() {
+	echo 'Getting pyaudio'
+	cd /usr/lib/
+	ln -s libportaudio.so.2.0.0 libportaudio.so
+	cd /tmp/
+	wget https://files.pythonhosted.org/packages/ab/42/b4f04721c5c5bfc196ce156b3c768998ef8c0ae3654ed29ea5020c749a6b/PyAudio-0.2.11.tar.gz
+	mkdir /tmp/aud
+	tar -xzf PyAudio-0.2.11.tar.gz -C /tmp/aud/
+	cd /tmp/aud/PyAudio-0.2.11/src/
+	wget https://raw.githubusercontent.com/EddieRingle/portaudio/master/include/portaudio.h
+	cd /tmp/aud/PyAudio-0.2.11/
+	python3 setup.py build
+	python3 setup.py install
+}
+shutdown() {
+	echo "pyaudio off"
+}

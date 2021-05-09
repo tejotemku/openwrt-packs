@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+
+START=92
+STOP=92
+
+boot() {
+	echo 'Getting SpeechRecognition'
+	pip3 install SpeechRecognition
+}
+shutdown() {
+	echo "SpeechRecognition off"
+}
