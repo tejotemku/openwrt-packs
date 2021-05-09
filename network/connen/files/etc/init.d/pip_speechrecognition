@@ -3,10 +3,17 @@
 START=92
 STOP=92
 
-boot() {
+start() {
 	echo 'Getting SpeechRecognition'
-	pip3 install SpeechRecognition
+	python3 -c "import speech_recognition"
+	if [ "$?" -ne 0 ] 
+	then
+		pip3 install SpeechRecognition
+	else
+		echo 'Already installed' > /root/sr.txt
+	fi
 }
-shutdown() {
-	echo "SpeechRecognition off"
+
+stop() {
+	echo "SpeechRecognition OFF"
 }
