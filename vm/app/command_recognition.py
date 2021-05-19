@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 import speech_recognition as sr
+import json
+import socket
+import ConnectionHandlerClient
 
 def set_alarm(cmdt):
     def get_daytime():
@@ -8,7 +11,7 @@ def set_alarm(cmdt):
         # sufixes that are responsible for part of day
         sufixes = {'a.m.': 0, 'p.m.': 12, 'in the morning': 0, 'in the evening': 12, 'in the afternoon': 12}
         # parts to cut out of the spoken command
-        cuts = [] 
+        cuts = []
         # finding daytime represented in hours:minutes format e.g. 10:45, 9:23
         colon_index = cmdt.find(':')
         if colon_index != -1:
@@ -18,7 +21,7 @@ def set_alarm(cmdt):
         # finding daytime represented just by the hour and sufix e.g. 9 p.m.,  4 in the afternoon
         else:
             for suf in sufixes:
-                sufix_index = cmdt.find(suf) 
+                sufix_index = cmdt.find(suf)
                 if sufix_index != -1:
                     hours = int(cmdt[sufix_index - 3 :sufix_index])
                     minutes = 0
@@ -46,18 +49,18 @@ def set_alarm(cmdt):
                 month = today.month
                 year = today.year
                 cuts.append(sub)
-        # get date represended in format: day(number), month(name), year(number)  
+        # get date represended in format: day(number), month(name), year(number)
         if month == None:
             # get month
-            month_words = ['month 0', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 
+            month_words = ['month 0', 'January', 'February', 'March', 'April', 'May', 'June', 'July',
             'August', 'September', 'October', 'November', 'December']
             for m in month_words:
                 if m in cmdt:
                     month = month_words.index(m)
                     cuts.append(m)
 
-            # get worded day 
-            day_words = ['day 0', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 
+            # get worded day
+            day_words = ['day 0', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh',
             'eight', 'nineth', 'tenth']
             for d in day_words:
                 if d in cmdt:
@@ -68,13 +71,13 @@ def set_alarm(cmdt):
             numbers = [int(s) for s in cmdt.split() if s.isdigit()]
             for n in numbers:
                 if 0 < n < 32:
-                    day = n 
+                    day = n
                 if 1970 < n < 3000:
                     year = n
             cuts.append(str(day))
             cuts.append(str(year))
         return day, month, year, cuts
-   
+
     def cut_command(cuts):
         s = cmdt
         for cut in cuts:
@@ -90,7 +93,7 @@ def set_alarm(cmdt):
         label = label.replace('called', '')
         return label.strip()
 
-    label = get_label()    
+    label = get_label()
     cmdt = cut_command(['set an alarm for', label, 'called'])
     hours, minutes, cuts = get_daytime()
     cuts.extend(['st of','nd of', 'th of'])
@@ -99,19 +102,24 @@ def set_alarm(cmdt):
     cmdt = cut_command(cuts)
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
-    # send data
+    # TODO: send data
+    data_json = json.dumps(data)
+
+
 
 
 def take_note(command_text):
     data = command_text.replace('take a note', '')
-    # send data
+    # TODO: send data
 
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
 
 while True:
-    try: 
-        with sr.Microphone() as source:
+
+    try:
+
+        with sr.Microphone(device_index=0) as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")
             audio = r.listen(source)
@@ -125,6 +133,6 @@ while True:
             if not recognizedCommand:
                 print("Command unrecognised, please try again.")
     except sr.RequestError as e:
-        print("Error: ", e) 
+        print("Error: ", e)
     except sr.UnknownValueError:
         pass
