@@ -4,6 +4,8 @@ import json
 import socket
 import ConnectionHandlerClient
 
+class CommandRecognition:
+
 def set_alarm(cmdt):
     def get_daytime():
         hours = None
@@ -115,10 +117,14 @@ def take_note(command_text):
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
 
+HOST = "127.0.0.1"
+PORT = 65432
+connection = ConnectionHandlerClient(HOST, PORT)
+if not connection.connect():
+    print("System could not connect to the server.")
+    exit()
 while True:
-
     try:
-
         with sr.Microphone(device_index=0) as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")

@@ -1,5 +1,6 @@
 import socket
 import json
+from helpers.SocketHandler import SocketHandler
 
 #Checks wheather the argument is in a json format
 def is_json(json_data):
@@ -29,6 +30,7 @@ class ConnectionHandlerClient:
         if self.__socket != None:
             try:
                 self.__socket.close()
+                self.__socket = None
             except:
                 return False
             return True
@@ -44,12 +46,12 @@ class ConnectionHandlerClient:
             self.__socket.sendall(data.encode('utf-8'))
             recv_conf = self.__socket.recv(1024)
         except:
-            return False, ""
+            return False, "Connection failed"
         if is_json(recv_conf.decode('utf-8')):
             confirmation = json.loads(recv_conf.decode('utf-8'))
         else:
             return False, "Received non-json from the server"
-        if confirmation["received"] != "OK"
+        if confirmation["received"] != "OK":
             return False, "No confirmation"
         return True, "OK"
 
