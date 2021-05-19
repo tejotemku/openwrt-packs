@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+START=92
+STOP=92
+
+start() {
+	echo 'Getting SpeechRecognition'
+	python3 -c "import speech_recognition"
+	if [ "$?" -ne 0 ] 
+	then
+		pip3 install SpeechRecognition
+	else
+		echo 'Already installed' > /root/sr.txt
+	fi
+}
+
+stop() {
+	echo "SpeechRecognition OFF"
+}
