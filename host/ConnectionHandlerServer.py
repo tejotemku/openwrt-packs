@@ -3,21 +3,28 @@ import json
 from helpers.SocketHandler import SocketHandler
 from serializers.JsonSerializer import JsonSerializer
 
-class ConnectionHandlerClient:
+class ConnectionHandlerServer:
     def __init__(self, host, port):
         self.__host = host
         self.__port = port
         self.__socket = None
         self.__serializer = JsonSerializer()
+        self.__connection = None
 
     #Creates socket connection
-    def connect(self):
+    def start(self):
         try:
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__socket.connect((self.__host, self.__port))
+            self.__socket.settimeout(None)
+            self.__socket.bind((self.__host, self.__port))
+            self.__socket.listen(30)
+            self.__connection, addr = self.__socket.accept()
         except:
-            return False
-        return True
+            return False, 'No address'
+        return True, addr
+
+    def get_connection(self):
+        return self.__connection
 
     #Closes socket connection
     def close(self):
@@ -44,11 +51,14 @@ class ConnectionHandlerClient:
             return False
         return True
 
-    #Returns whether ping was successful
-    def ping(self):
-        ping_data = {"conn_test": "conn_test"}
-        code = self.send(ping_data)
-        if code:
-            return True
-        else:
-            return False
+    def receive(self):
+        try:
+            print("recv")
+            count = SocketHandler.read_len(self.__connection)
+            print(count)
+            bytes = SocketHandler.read_bytes(self.__connection, count)
+            print(bytes)
+            payload_str = str(bytes, 'utf8')
+            return self.__serializer.deserialize(payload_str)
+        except BrokenPipeError:
+            raise BrokenPipeError('conn lost')

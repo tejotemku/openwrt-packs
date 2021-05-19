@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 import speech_recognition as sr
 import json
 import socket
-import ConnectionHandlerClient
+from ConnectionHandlerClient import ConnectionHandlerClient
 
-class CommandRecognition:
+connection = None
 
 def set_alarm(cmdt):
     def get_daytime():
@@ -105,27 +105,46 @@ def set_alarm(cmdt):
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
     # TODO: send data
-    data_json = json.dumps(data)
-
-
+    payload = {'type':'alarm', 'data': data}
+    send_data(payload)
 
 
 def take_note(command_text):
     data = command_text.replace('take a note', '')
     # TODO: send data
+    payload = {'type':'note', 'data': data}
+    send_data(payload)
+
+def send_data(data):
+    print("Sending")
+    if connection is not None:
+        is_successful = connection.send(data)
+        if not is_successful:
+            connection.close()
+            print("Restarting connection...")
+            # connect_server()
+
+def connect_server():
+    while True:
+        HOST = "127.0.0.1"
+        PORT = 22222
+        connection = ConnectionHandlerClient(HOST, PORT)
+        if not connection.connect():
+            print("System could not connect to the server.")
+        else:
+            return
+
 
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
-
 HOST = "127.0.0.1"
-PORT = 65432
+PORT = 22222
 connection = ConnectionHandlerClient(HOST, PORT)
-if not connection.connect():
-    print("System could not connect to the server.")
-    exit()
+print(connection.connect())
+# connect_server()
 while True:
     try:
-        with sr.Microphone(device_index=0) as source:
+        with sr.Microphone() as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")
             audio = r.listen(source)
@@ -135,6 +154,7 @@ while True:
             recognizedCommand = False
             for c, fun in commands.items():
                 if c in text:
+                    recognizedCommand = True
                     fun(text)
             if not recognizedCommand:
                 print("Command unrecognised, please try again.")
