@@ -141,10 +141,9 @@ HOST = "127.0.0.1"
 PORT = 22222
 connection = ConnectionHandlerClient(HOST, PORT)
 print(connection.connect())
-# connect_server()
 while True:
     try:
-        with sr.Microphone() as source:
+        with sr.Microphone(device_index=0) as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")
             audio = r.listen(source)
