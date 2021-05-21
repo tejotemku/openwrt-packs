@@ -8,8 +8,8 @@ connection = None
 
 def set_alarm(cmdt):
     def get_daytime():
-        hours = None
-        minutes = None
+        hours = 8
+        minutes = 0
         # sufixes that are responsible for part of day
         sufixes = {'a.m.': 0, 'p.m.': 12, 'in the morning': 0, 'in the evening': 12, 'in the afternoon': 12}
         # parts to cut out of the spoken command
@@ -34,6 +34,7 @@ def set_alarm(cmdt):
             if suf in cmdt:
                 hours += h
                 cuts.append(suf)
+                break
         return hours, minutes, cuts
 
     def get_date():
@@ -83,7 +84,8 @@ def set_alarm(cmdt):
     def cut_command(cuts):
         s = cmdt
         for cut in cuts:
-            s = s.replace(cut, ' ')
+            if cut:
+                s = s.replace(cut, ' ')
         return s
 
 
@@ -96,7 +98,7 @@ def set_alarm(cmdt):
         return label.strip()
 
     label = get_label()
-    cmdt = cut_command(['set an alarm for', label, 'called'])
+    cmdt = cut_command(['set an alarm for', label, 'called', '-'])
     hours, minutes, cuts = get_daytime()
     cuts.extend(['st of','nd of', 'th of'])
     cmdt = cut_command(cuts)
@@ -104,14 +106,13 @@ def set_alarm(cmdt):
     cmdt = cut_command(cuts)
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
-    # TODO: send data
     payload = {'type':'alarm', 'data': data}
     send_data(payload)
 
 
 def take_note(command_text):
     data = command_text.replace('take a note', '')
-    # TODO: send data
+    data = data.strip()
     payload = {'type':'note', 'data': data}
     send_data(payload)
 
@@ -122,7 +123,7 @@ def send_data(data):
         if not is_successful:
             connection.close()
             print("Restarting connection...")
-            # connect_server()
+
 
 def connect_server():
     while True:
@@ -139,12 +140,12 @@ r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
 HOST = "127.0.0.1"
 PORT = 22222
-connection = ConnectionHandlerClient(HOST, PORT)
+connection = ConnectionHandlerClient(HOST, PORT) 
 print(connection.connect())
 while True:
     try:
         with sr.Microphone(device_index=0) as source:
-            r.adjust_for_ambient_noise(source, duration=0.2)
+            r.adjust_for_ambient_noise(source, duration=0.5)
             print("Listening...")
             audio = r.listen(source)
             print("Got it...")

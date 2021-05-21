@@ -67,7 +67,7 @@ class Window(QMainWindow):
         ContentLayout.addWidget(self.remove_button, 1)
 
     def start(self):
-        self.content.hide()
+        self.hide_content()
         self.note_list_widget.hideList()
         self.alarm_list_widget.hideList()
         # signals
@@ -165,6 +165,7 @@ class Window(QMainWindow):
     def remove_alarm(self, name):
         self.alarms.pop(name, None)
         self.alarm_list_widget.resetList()
+        self.hide_content()
         self.save_data()
 
     def add_note(self, data):
@@ -176,7 +177,13 @@ class Window(QMainWindow):
     def remove_note(self, name):
         self.notes.remove(name)
         self.note_list_widget.resetList()
+        self.hide_content()
         self.save_data()
+
+    def hide_content(self):
+        self.content_label.setText("")
+        self.content.hide()
+
 
 class MenuOptionHiddenList(QtWidgets.QFrame):
     def __init__(self, window, items, name, func, *args, **kwargs):
