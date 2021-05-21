@@ -6,6 +6,7 @@ import sys, threading, pickle
 from datetime import datetime as dt, timedelta
 from ConnectionHandlerServer import ConnectionHandlerServer
 
+global server
 server = None
 
 class Window(QMainWindow):
@@ -67,7 +68,7 @@ class Window(QMainWindow):
         ContentLayout.addWidget(self.remove_button, 1)
 
     def start(self):
-        self.hide_content()
+        self.content.hide()
         self.note_list_widget.hideList()
         self.alarm_list_widget.hideList()
         # signals
@@ -102,10 +103,10 @@ class Window(QMainWindow):
         except:
             return dict(), list()
 
-    def display_alarms(self, alarm):
+    def display_alarms(self, alarm_label):
         self.displayed_info_type = 'alarm'
-        alarm = self.alarms[alarm]
-        self.content_label.setText(f"ALARM: \n\ntytuł: {alarm.label}\ndzień - {alarm.day:02d}.{alarm.month:02d}\
+        alarm = self.alarms[alarm_label]
+        self.content_label.setText(f"ALARM: \n\ntytuł: {alarm_label}\ndzień - {alarm.day:02d}.{alarm.month:02d}\
 .{alarm.year}\ngodzina - {alarm.hour:02d}:{alarm.minute:02d}")
         self.content.show()
 
@@ -157,7 +158,7 @@ class Window(QMainWindow):
         if onlyHour and new_date < dt.today():
             new_date += timedelta(days=1)
         if label == None:
-            label = str(dt.today())
+            label = str(new_date)
         self.alarms.update({label: new_date})
         self.alarm_list_widget.newItem(label)
         self.save_data()
@@ -165,7 +166,6 @@ class Window(QMainWindow):
     def remove_alarm(self, name):
         self.alarms.pop(name, None)
         self.alarm_list_widget.resetList()
-        self.hide_content()
         self.save_data()
 
     def add_note(self, data):
@@ -177,13 +177,7 @@ class Window(QMainWindow):
     def remove_note(self, name):
         self.notes.remove(name)
         self.note_list_widget.resetList()
-        self.hide_content()
         self.save_data()
-
-    def hide_content(self):
-        self.content_label.setText("")
-        self.content.hide()
-
 
 class MenuOptionHiddenList(QtWidgets.QFrame):
     def __init__(self, window, items, name, func, *args, **kwargs):
@@ -267,6 +261,7 @@ def clock(func_popup, func_remove, alarm_list):
             pass
 
 def collect_data(func_add_alarm, func_add_note):
+    global server
     while True:
         if server.get_connection() is not None:
             try:
@@ -282,13 +277,20 @@ def collect_data(func_add_alarm, func_add_note):
                 elif type == 'alarm':
                     func_add_alarm.emit(data)
 
-HOST = '127.0.0.1'
-PORT = 22222
-server = ConnectionHandlerServer(HOST, PORT)
-is_started, addr = server.start()
-print('Connected with: ', addr)
+def server_start():
+    global server
+    HOST = '127.0.0.1'
+    PORT = 22222
+    server = ConnectionHandlerServer(HOST, PORT)
+    is_started, addr = server.start()
+    print('Connected with: ', addr)
+    return is_started
+
 # server_connection = server.get_connection()
-app = QApplication(sys.argv)
-w = Window()
-w.start()
-sys.exit(app.exec_())
+if server_start():
+    app = QApplication(sys.argv)
+    w = Window()
+    w.start()
+    sys.exit(app.exec_())
+else:
+    exit()
