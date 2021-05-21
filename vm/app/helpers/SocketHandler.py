@@ -26,7 +26,7 @@ class SocketHandler:
         total_written = 0
         while total_written < count:
             written = socket.send(buffer[total_written:])
-            if written == 0:
+            if written == 0 or written is None:
                 raise BrokenPipeError("socket disconnected")
             total_written += written
 

@@ -17,8 +17,12 @@ class ConnectionHandlerServer:
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.settimeout(None)
             self.__socket.bind((self.__host, self.__port))
-            self.__socket.listen(30)
-            self.__connection, addr = self.__socket.accept()
+            while True:
+                print("Listening for client (30s)...")
+                self.__socket.listen(30)
+                self.__connection, addr = self.__socket.accept()
+                if addr is not None:
+                    break
         except:
             return False, 'No address'
         return True, addr
@@ -53,11 +57,8 @@ class ConnectionHandlerServer:
 
     def receive(self):
         try:
-            print("recv")
             count = SocketHandler.read_len(self.__connection)
-            print(count)
             bytes = SocketHandler.read_bytes(self.__connection, count)
-            print(bytes)
             payload_str = str(bytes, 'utf8')
             return self.__serializer.deserialize(payload_str)
         except BrokenPipeError:
