@@ -105,8 +105,8 @@ class Window(QMainWindow):
     def display_alarms(self, alarm):
         self.displayed_info_type = 'alarm'
         alarm = self.alarms[alarm]
-        self.content_label.setText(f"ALARM: \n\ndzień - {alarm.day:02d}:{alarm.month:02d}\
-:{alarm.year}\ngodzina - {alarm.hour:02d}:{alarm.minute:02d}")
+        self.content_label.setText(f"ALARM: \n\ndzień - {alarm.day:02d}.{alarm.month:02d}\
+.{alarm.year}\ngodzina - {alarm.hour:02d}:{alarm.minute:02d}")
         self.content.show()
 
     def display_notes(self, notes):
