@@ -275,8 +275,7 @@ def collect_data(func_add_alarm, func_add_note):
     while True:
         if server is not None and server.get_connection() is not None:
             try:
-                with mutex_server:
-                    received_data = server.receive()
+                received_data = server.receive()
             except:
                 exit()
             print(received_data)
@@ -310,8 +309,7 @@ def ping_client(window):
         if server is None:
             return False
         try:
-            with mutex_server:
-                is_sent = server.ping()
+            is_sent = server.ping()
         except:
             print("SOCKET PING FAILED")
             return
