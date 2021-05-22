@@ -5,7 +5,6 @@ from ConnectionHandlerClient import ConnectionHandlerClient
 
 global connection
 connection = None
-mutex_client = threading.Lock()
 
 def set_alarm(cmdt):
     def get_daytime():
@@ -116,7 +115,6 @@ def take_note(command_text):
 #sends collected data to the server
 def send_data(data):
     global connection
-    mutex_client.acquire()
     if connection is not None:
         try:
             is_successful = connection.send(data)
@@ -126,10 +124,7 @@ def send_data(data):
         if not is_successful:
             connection.close()
             print("Restarting connection...")
-            mutex_client.release()
             connect_server()
-        else:
-            mutex_client.release()
     else:
         print("Server is disconnected")
 
@@ -137,39 +132,33 @@ def send_data(data):
 def connect_server():
     global connection
     while True:
-        with mutex_client:
-            HOST = "127.0.0.1"
-            PORT = 22222
-            connection = ConnectionHandlerClient(HOST, PORT)
-            if not connection.connect():
-                connection = None
-                print("System could not connect to the server. Waiting 10s...")
-                time.sleep(10)
-            else:
-                print("Connected")
-                return
+        HOST = "127.0.0.1"
+        PORT = 22222
+        connection = ConnectionHandlerClient(HOST, PORT)
+        if not connection.connect():
+            connection = None
+            print("System could not connect to the server. Waiting 10s...")
+            time.sleep(10)
+        else:
+            print("Connected")
+            return
 
 #sends server 1 byte payload every 5s to make sure it is still connected
 def ping_server():
     global connection
     while True:
-        mutex_client.acquire()
         if connection is None:
-            mutex_client.release()
             return False
         try:
             is_sent = connection.ping()
         except:
             print("SOCKET PING FAILED")
-            mutex_client.release()
             return
         if not is_sent:
             print("PING FAILED. RESTARTING...")
-            mutex_client.release()
             connect_server()
         else:
-            mutex_client.release()
-        print("PING SUCCESS")
+            print("PING SUCCESS")
         time.sleep(5)
 
 r = sr.Recognizer()

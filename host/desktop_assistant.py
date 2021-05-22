@@ -8,7 +8,6 @@ from ConnectionHandlerServer import ConnectionHandlerServer
 
 global server
 server = None
-mutex_server = threading.Lock()
 
 class Window(QMainWindow):
     popup_alarm_signal = pyqtSignal(str)
@@ -280,7 +279,7 @@ def collect_data(func_add_alarm, func_add_note):
                 exit()
             print(received_data)
             if received_data == {}:
-                print("PONGED")
+                print("CLIENT-PING SUCCESS")
             if 'type' in received_data and 'data' in received_data:
                 type = received_data["type"]
                 data = received_data["data"]
@@ -295,10 +294,9 @@ def server_start():
     HOST = '127.0.0.1'
     PORT = 22222
     print("Starting server...")
-    with mutex_server:
-        if server is None:
-            server = ConnectionHandlerServer(HOST, PORT)
-        is_started, addr = server.start()
+    if server is None:
+        server = ConnectionHandlerServer(HOST, PORT)
+    is_started, addr = server.start()
     print('Connected with: ', addr)
     return is_started
 

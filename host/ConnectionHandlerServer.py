@@ -1,5 +1,4 @@
-import socket
-import json
+import socket, json, threading
 from helpers.SocketHandler import SocketHandler
 from serializers.JsonSerializer import JsonSerializer
 
@@ -11,6 +10,8 @@ class ConnectionHandlerServer:
         self.__socket = None
         self.__serializer = JsonSerializer()
         self.__connection = None
+        self.__mutex_send = threading.Lock()
+        self.__mutex_recv = threading.Lock()
 
     #Creates socket connection
     def start(self):
@@ -50,18 +51,20 @@ class ConnectionHandlerServer:
         payload_length = len(data_bytes)
         header = SocketHandler.encodeBytes(payload_length)
         try:
-            SocketHandler.write_bytes(self.__connection, header)
-            SocketHandler.write_bytes(self.__connection, data_bytes)
+            with self.__mutex_send:
+                SocketHandler.write_bytes(self.__connection, header)
+                SocketHandler.write_bytes(self.__connection, data_bytes)
         except:
             return False
         return True
 
     def receive(self):
         try:
-            count = SocketHandler.read_len(self.__connection)
-            if count == 1:
-                return {}
-            bytes = SocketHandler.read_bytes(self.__connection, count)
+            with self.__mutex_recv:
+                count = SocketHandler.read_len(self.__connection)
+                if count == 1:
+                    return {}
+                bytes = SocketHandler.read_bytes(self.__connection, count)
             payload_str = str(bytes, 'utf8')
             return self.__serializer.deserialize(payload_str)
         except BrokenPipeError:
@@ -73,7 +76,8 @@ class ConnectionHandlerServer:
         payload_length = 1
         payload = SocketHandler.encodeBytes(payload_length)
         try:
-            SocketHandler.write_bytes(self.__connection, payload)
+            with self.__mutex_send:
+                SocketHandler.write_bytes(self.__connection, payload)
         except:
             return False
         return True
