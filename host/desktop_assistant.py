@@ -10,7 +10,7 @@ server = None
 
 class Window(QMainWindow):
     popup_alarm_signal = pyqtSignal(str)
-    remove_signal = pyqtSignal(str)
+    remove_signal = pyqtSignal(int)
     add_alarm_signal = pyqtSignal(dict)
     add_note_signal = pyqtSignal(str)
 
@@ -45,10 +45,10 @@ class Window(QMainWindow):
         # MENU
         menu_layout = QtWidgets.QVBoxLayout(self.menu)
         # notes
-        self.note_list_widget = MenuOptionHiddenList(self, self.notes, "Notatki", self.display_notes)
+        self.note_list_widget = MenuOptionHiddenList(self, "notes", self.notes, "Notatki", self.display_notes)
         menu_layout.addWidget(self.note_list_widget, 1)
         # alarms
-        self.alarm_list_widget = MenuOptionHiddenList(self, self.alarms.keys(), "Alarmy", self.display_alarms)
+        self.alarm_list_widget = MenuOptionHiddenList(self, "alarms",self.alarms, "Alarmy", self.display_alarms)
         menu_layout.addWidget(self.alarm_list_widget, 1)
         menu_layout.addStretch()
         # server connection indicator
@@ -70,6 +70,7 @@ class Window(QMainWindow):
         self.content_label.setAlignment(Qt.AlignTop)
         font = QFont('Times', 18)
         self.content_label.setFont(font)
+        self.content_label.setWordWrap(True)
         content_layout.addWidget(self.content_label, 100)
         content_layout.addStretch()
         # deleting alarms or notes
@@ -84,7 +85,7 @@ class Window(QMainWindow):
         self.alarm_list_widget.hide_list()
         # signals
         self.popup_alarm_signal[str].connect(self.popup_alarm)
-        self.remove_signal[str].connect(self.remove_alarm)
+        self.remove_signal[int].connect(self.remove_alarm)
         self.add_alarm_signal[dict].connect(self.add_alarm)
         self.add_note_signal[str].connect(self.add_note)
         # background clock thread
@@ -108,30 +109,31 @@ class Window(QMainWindow):
     def save_data(self):
         # saving data to file
         itemlist = {'alarms': self.alarms, 'notes': self.notes}
-        with open('outfile', 'wb') as fp:
+        with open('data', 'wb') as fp:
             pickle.dump(itemlist, fp)
 
     def load_data(self):
         # loading data from file
         try:
-            with open ('outfile', 'rb') as fp:
+            with open ('data', 'rb') as fp:
                 itemlist = pickle.load(fp)
             return itemlist['alarms'], itemlist['notes']
         except:
             return dict(), dict()
 
-    def display_alarms(self, alarm_label):
+    def display_alarms(self, id):
         # displaying info about alarm in content frame
         self.displayed_info_type = 'alarm'
-        alarm = self.alarms[alarm_label]
+        alarm = self.alarms[id]['date']
+        alarm_label= self.alarms[id]['label']
         self.content_label.setText(f"ALARM: \n\ntytuł: {alarm_label}\ndzień - {alarm.day:02d}.{alarm.month:02d}\
 .{alarm.year}\ngodzina - {alarm.hour:02d}:{alarm.minute:02d}")
         self.content.show()
 
-    def display_notes(self, notes):
+    def display_notes(self, id):
         # displaying a note in content frame
         self.displayed_info_type = 'note'
-        self.content_label.setText(f"NOTATKA: \n\n{notes}")
+        self.content_label.setText(f"NOTATKA: \n\n{self.notes[id]}")
         self.content.show()
 
 
@@ -145,20 +147,20 @@ class Window(QMainWindow):
                 selected_list_widget = self.note_list_widget
                 selected_func = self.remove_note
 
-            selected_item = selected_list_widget.items_list.selectedItems()[0].get_full_text()
+            selected_item = selected_list_widget.items_list.selectedItems()[0].get_full_data()
             selected_func(selected_item)
         except:
             pass
 
     def start_clock(self):
         # starting background clock thread that manages alarms
-        self.clock_thread =threading.Thread(target=clock, args=(self.popup_alarm_signal, self.remove_signal, self.alarms, ))
+        self.clock_thread = threading.Thread(target=clock, args=(self.popup_alarm_signal, self.remove_signal, self.alarms, ))
         self.clock_thread.daemon = True
         self.clock_thread.start()
 
     def start_collector(self):
         # starting data collecion thread
-        self.collector_thread =threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
+        self.collector_thread = threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
         self.collector_thread.daemon = True
         self.collector_thread.start()
 
@@ -183,16 +185,16 @@ class Window(QMainWindow):
         if label == None:
             label = str(new_date)
         if self.alarms.keys():
-            id = max(self.alarms.keys() + 1)
+            id = max(self.alarms.keys()) + 1
         else:
             id = 1
         self.alarms.update({id: {'label':label, 'date': new_date}})
         self.alarm_list_widget.reset_list()
         self.save_data()
 
-    def remove_alarm(self, name):
+    def remove_alarm(self, id):
         # removing an alarm from aplication and file
-        self.alarms.pop(name, None)
+        self.alarms.pop(id, None)
         self.alarm_list_widget.reset_list()
         self.hide_content()
         self.save_data()
@@ -200,7 +202,7 @@ class Window(QMainWindow):
     def add_note(self, data):
         # creating a note and saving to file
         if self.notes.keys():
-            id = max(self.notes.keys() + 1)
+            id = max(self.notes.keys()) + 1
         else:
             id = 1
         self.notes.update({id: data})
@@ -208,9 +210,9 @@ class Window(QMainWindow):
         self.save_data()
 
 
-    def remove_note(self, name):
+    def remove_note(self, id):
         # removing a note from aplication and file
-        self.notes.remove(name)
+        self.notes.pop(id, None)
         self.note_list_widget.reset_list()
         self.hide_content()
         self.save_data()
@@ -232,9 +234,10 @@ class Window(QMainWindow):
 
 class MenuOptionHiddenList(QtWidgets.QFrame):
     # custom list viewer
-    def __init__(self, window, items, name, func, *args, **kwargs):
+    def __init__(self, window, type, items, name, func, *args, **kwargs):
         super(MenuOptionHiddenList, self).__init__(*args, **kwargs)
         self.win = window
+        self.type = type
         self.items = items
         self.layout = QtWidgets.QVBoxLayout(self)
         self.items_btn = QPushButton(name)
@@ -274,13 +277,17 @@ class MenuOptionHiddenList(QtWidgets.QFrame):
 
     def new_item(self, item_id):
         # add new item to list and show new list
-        label = self.items[item_id]['label']
+        if self.type == 'alarms':
+            item_dict = self.items[item_id]
+            label = item_dict['label']
+        elif self.type == 'notes':
+            label = self.items[item_id]
         if len(label) > 24:
             item_short_name = label[:21] + '...'
         else:
             item_short_name = label[:24]
         item = ListWidgetItem(item_short_name)
-        item.set_full_text(label)
+        item.set_full_data(item_id)
         self.items_list.insertItem(0, item)
         self.show_list()
 
@@ -291,13 +298,13 @@ class MenuOptionHiddenList(QtWidgets.QFrame):
 
 class ListWidgetItem(QtWidgets.QListWidgetItem):
     # custom ListWidgetItem that holds additional data
-    def set_full_text(self, text):
+    def set_full_data(self, data):
         # add aditional data
-        self.full_text = text
+        self.full_data = data
 
-    def get_full_text(self):
+    def get_full_data(self):
         # get data that Item holds
-        return self.full_text
+        return self.full_data
 
 class ListWidget(QtWidgets.QListWidget):
     # custom ListWidgetItemWidget which Items call function 
@@ -307,7 +314,7 @@ class ListWidget(QtWidgets.QListWidget):
 
     def clicked(self, item):
         # Item call function and pass its data
-        self.func(item.get_full_text())
+        self.func(item.get_full_data())
 
 def clock(func_popup, func_remove, alarm_list):
     # background clock that manages alarms
@@ -319,15 +326,14 @@ def clock(func_popup, func_remove, alarm_list):
                 func_remove.emit(p)
                 pop_list.remove(p)
             for key, value in alarm_list.items():
-                if value < dt.today():
-                    func_popup.emit(key)
+                if value['date'] < dt.today():
+                    func_popup.emit(value['label'])
                     pop_list.append(key)
         except:
             pass
 
 def collect_data(func_add_alarm, func_add_note):
     # listen and collect data from server
-    return
     while True:
         if server.get_connection() is not None:
             try:
@@ -345,10 +351,10 @@ def collect_data(func_add_alarm, func_add_note):
 
 HOST = '127.0.0.1'
 PORT = 22222
-# server = ConnectionHandlerServer(HOST, PORT)
-# is_started, addr = server.start()
-# print('Connected with: ', addr)
-# server_connection = server.get_connection()
+server = ConnectionHandlerServer(HOST, PORT)
+is_started, addr = server.start()
+print('Connected with: ', addr)
+server_connection = server.get_connection()
 app = QApplication(sys.argv)
 w = Window()
 w.start()

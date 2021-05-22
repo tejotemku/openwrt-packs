@@ -7,6 +7,7 @@ from ConnectionHandlerClient import ConnectionHandlerClient
 connection = None
 
 def set_alarm(cmdt):
+    # function to set an alarm
     def get_daytime():
         hours = 8
         minutes = 0
@@ -82,14 +83,15 @@ def set_alarm(cmdt):
         return day, month, year, cuts
 
     def cut_command(cuts):
+        # removing unnecessary parts of string
         s = cmdt
         for cut in cuts:
             if cut:
                 s = s.replace(cut, ' ')
         return s
 
-
     def get_label():
+        # extracting label from string
         index = cmdt.find('called')
         if index == -1:
             return None
@@ -111,6 +113,7 @@ def set_alarm(cmdt):
 
 
 def take_note(command_text):
+    # function to take a note
     data = command_text.replace('take a note', '')
     data = data.strip()
     payload = {'type':'note', 'data': data}
