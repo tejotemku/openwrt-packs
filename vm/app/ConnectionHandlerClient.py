@@ -46,9 +46,12 @@ class ConnectionHandlerClient:
 
     #Returns whether ping was successful
     def ping(self):
-        ping_data = {"conn_test": "conn_test"}
-        code = self.send(ping_data)
-        if code:
-            return True
-        else:
+        if self.__socket is None:
             return False
+        payload_length = 1
+        payload = SocketHandler.encodeBytes(payload_length)
+        try:
+            SocketHandler.write_bytes(self.__socket, payload)
+        except:
+            return False
+        return True

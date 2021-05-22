@@ -59,6 +59,8 @@ class ConnectionHandlerServer:
     def receive(self):
         try:
             count = SocketHandler.read_len(self.__connection)
+            if count == 1:
+                return {}
             bytes = SocketHandler.read_bytes(self.__connection, count)
             payload_str = str(bytes, 'utf8')
             return self.__serializer.deserialize(payload_str)

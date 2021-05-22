@@ -143,6 +143,12 @@ class Window(QMainWindow):
         self.collector_thread.daemon = True
         self.collector_thread.start()
 
+    def restart_collector(self):
+        self.collector_thread = None
+        self.collector_thread =threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
+        self.collector_thread.daemon = True
+        self.collector_thread.start()
+
     def add_alarm(self, data):
         onlyHour = False
         year = data['year']
@@ -262,16 +268,20 @@ def clock(func_popup, func_remove, alarm_list):
                     pop_list.append(key)
         except:
             pass
+
 #main data collection from the client
 def collect_data(func_add_alarm, func_add_note):
     global server
     while True:
-        if server.get_connection() is not None:
+        if server is not None and server.get_connection() is not None:
             try:
-                received_data = server.receive()
+                with mutex_server:
+                    received_data = server.receive()
             except:
                 exit()
             print(received_data)
+            if received_data == {}:
+                print("PONGED")
             if 'type' in received_data and 'data' in received_data:
                 type = received_data["type"]
                 data = received_data["data"]
@@ -285,13 +295,16 @@ def server_start():
     global server
     HOST = '127.0.0.1'
     PORT = 22222
-    server = ConnectionHandlerServer(HOST, PORT)
-    is_started, addr = server.start()
+    print("Starting server...")
+    with mutex_server:
+        if server is None:
+            server = ConnectionHandlerServer(HOST, PORT)
+        is_started, addr = server.start()
     print('Connected with: ', addr)
     return is_started
 
 #sends client 1 byte payload every 5s to make sure it is still connected
-def ping_client():
+def ping_client(window):
     global server
     while True:
         if server is None:
@@ -304,21 +317,23 @@ def ping_client():
             return
         if not is_sent:
             print("PING FAILED")
-        else:
-            print("PING SUCCESS")
+            reload_server(window)
+        print("PING SUCCESS")
         time.sleep(5)
 
 # responsible for reloading server after connection was lost
-def reload_server():
+def reload_server(window):
     if server_start():
+        print("Server restarted")
+        window.restart_collector()
         return True
     return False
 
 app = QApplication(sys.argv)
 w = Window()
 w.start()
-server_start():
-t_ping = threading.Thread(target=ping_client, args=())
+server_start()
+t_ping = threading.Thread(target=ping_client, args=(w,))
 t_ping.daemon = True
 t_ping.start()
 sys.exit(app.exec_())
