@@ -45,16 +45,16 @@ class Window(QMainWindow):
         # MENU
         menu_layout = QtWidgets.QVBoxLayout(self.menu)
         # notes
-        self.note_list_widget = MenuOptionHiddenList(self, "notes", self.notes, "Notatki", self.display_notes)
+        self.note_list_widget = MenuOptionHiddenList(self, "notes", self.notes, "Notes", self.display_notes)
         menu_layout.addWidget(self.note_list_widget, 1)
         # alarms
-        self.alarm_list_widget = MenuOptionHiddenList(self, "alarms",self.alarms, "Alarmy", self.display_alarms)
+        self.alarm_list_widget = MenuOptionHiddenList(self, "alarms",self.alarms, "Alarms", self.display_alarms)
         menu_layout.addWidget(self.alarm_list_widget, 1)
         menu_layout.addStretch()
         # server connection indicator
         indicator_layout_frame = QFrame()
         indicator_layout = QtWidgets.QHBoxLayout(indicator_layout_frame)
-        server_connection_label = QLabel("Status połączenia serwera: ")
+        server_connection_label = QLabel("Server connection status: ")
         self.server_connection_indicator = QLabel()
         font = QFont('Times', 18)
         self.server_connection_indicator.setFont(font)
@@ -74,7 +74,7 @@ class Window(QMainWindow):
         content_layout.addWidget(self.content_label, 100)
         content_layout.addStretch()
         # deleting alarms or notes
-        self.remove_button = QPushButton("Usuń")
+        self.remove_button = QPushButton("Delete")
         self.remove_button.clicked.connect(self.remove_selected)
         content_layout.addWidget(self.remove_button, 1)
 
