@@ -3,6 +3,7 @@ import json
 from helpers.SocketHandler import SocketHandler
 from serializers.JsonSerializer import JsonSerializer
 
+
 class ConnectionHandlerServer:
     def __init__(self, host, port):
         self.__host = host
@@ -42,15 +43,15 @@ class ConnectionHandlerServer:
         return False
 
     def send(self, data):
-        if self.__socket is None:
+        if self.__connection is None:
             return False, "No socket specified"
         data_serialized = self.__serializer.serialize(data)
         data_bytes = bytes(data_serialized, 'utf8')
         payload_length = len(data_bytes)
         header = SocketHandler.encodeBytes(payload_length)
         try:
-            SocketHandler.write_bytes(self.__socket, header)
-            SocketHandler.write_bytes(self.__socket, data_bytes)
+            SocketHandler.write_bytes(self.__connection, header)
+            SocketHandler.write_bytes(self.__connection, data_bytes)
         except:
             return False
         return True
@@ -63,3 +64,14 @@ class ConnectionHandlerServer:
             return self.__serializer.deserialize(payload_str)
         except BrokenPipeError:
             raise BrokenPipeError('conn lost')
+
+    def ping(self):
+        if self.__connection is None:
+            return False
+        payload_length = 1
+        payload = SocketHandler.encodeBytes(payload_length)
+        try:
+            SocketHandler.write_bytes(self.__connection, payload)
+        except:
+            return False
+        return True

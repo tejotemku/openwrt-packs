@@ -2,12 +2,13 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QEvent, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QPushButton, QFrame
-import sys, threading, pickle
+import sys, threading, pickle, time
 from datetime import datetime as dt, timedelta
 from ConnectionHandlerServer import ConnectionHandlerServer
 
 global server
 server = None
+mutex_server = threading.Lock()
 
 class Window(QMainWindow):
     popup_alarm_signal = pyqtSignal(str)
@@ -25,8 +26,10 @@ class Window(QMainWindow):
         # tworzenie okna i ustawianie stylów
         self.setGeometry(200, 200, 960, 720)
         self.setWindowTitle("Asystent Desktopowy")
-        self.setStyleSheet(open("style.qss", "r").read())
-
+        try:
+            self.setStyleSheet(open("style.qss", "r").read())
+        except:
+            raise Exception('style.qss not found')
         # GŁÓWNA RAMA
         frame = QFrame()
         self.setCentralWidget(frame)
@@ -259,7 +262,7 @@ def clock(func_popup, func_remove, alarm_list):
                     pop_list.append(key)
         except:
             pass
-
+#main data collection from the client
 def collect_data(func_add_alarm, func_add_note):
     global server
     while True:
@@ -277,6 +280,7 @@ def collect_data(func_add_alarm, func_add_note):
                 elif type == 'alarm':
                     func_add_alarm.emit(data)
 
+#starts new server socket
 def server_start():
     global server
     HOST = '127.0.0.1'
@@ -286,11 +290,35 @@ def server_start():
     print('Connected with: ', addr)
     return is_started
 
-# server_connection = server.get_connection()
-if server_start():
-    app = QApplication(sys.argv)
-    w = Window()
-    w.start()
-    sys.exit(app.exec_())
-else:
-    exit()
+#sends client 1 byte payload every 5s to make sure it is still connected
+def ping_client():
+    global server
+    while True:
+        if server is None:
+            return False
+        try:
+            with mutex_server:
+                is_sent = server.ping()
+        except:
+            print("SOCKET PING FAILED")
+            return
+        if not is_sent:
+            print("PING FAILED")
+        else:
+            print("PING SUCCESS")
+        time.sleep(5)
+
+# responsible for reloading server after connection was lost
+def reload_server():
+    if server_start():
+        return True
+    return False
+
+app = QApplication(sys.argv)
+w = Window()
+w.start()
+server_start():
+t_ping = threading.Thread(target=ping_client, args=())
+t_ping.daemon = True
+t_ping.start()
+sys.exit(app.exec_())
