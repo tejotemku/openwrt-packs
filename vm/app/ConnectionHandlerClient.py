@@ -1,5 +1,4 @@
-import socket
-import json
+import socket, json, threading
 from helpers.SocketHandler import SocketHandler
 from serializers.JsonSerializer import JsonSerializer
 
@@ -9,6 +8,7 @@ class ConnectionHandlerClient:
         self.__port = port
         self.__socket = None
         self.__serializer = JsonSerializer()
+        self.__mutex_send = threading.Lock()
 
     #Creates socket connection
     def connect(self):
@@ -38,17 +38,22 @@ class ConnectionHandlerClient:
         payload_length = len(data_bytes)
         header = SocketHandler.encodeBytes(payload_length)
         try:
-            SocketHandler.write_bytes(self.__socket, header)
-            SocketHandler.write_bytes(self.__socket, data_bytes)
+            with self.__mutex_send:
+                SocketHandler.write_bytes(self.__socket, header)
+                SocketHandler.write_bytes(self.__socket, data_bytes)
         except:
             return False
         return True
 
     #Returns whether ping was successful
     def ping(self):
-        ping_data = {"conn_test": "conn_test"}
-        code = self.send(ping_data)
-        if code:
-            return True
-        else:
+        if self.__socket is None:
             return False
+        payload_length = 1
+        payload = SocketHandler.encodeBytes(payload_length)
+        try:
+            with self.__mutex_send:
+                SocketHandler.write_bytes(self.__socket, payload)
+        except:
+            return False
+        return True

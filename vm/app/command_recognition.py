@@ -1,16 +1,16 @@
 from datetime import datetime, timedelta
 import speech_recognition as sr
-import json
-import socket
+import json, socket, time, threading
 from ConnectionHandlerClient import ConnectionHandlerClient
 
+global connection
 connection = None
 
 def set_alarm(cmdt):
     # function to set an alarm
     def get_daytime():
-        hours = 8
-        minutes = 0
+        hours = None
+        minutes = None
         # sufixes that are responsible for part of day
         sufixes = {'a.m.': 0, 'p.m.': 12, 'in the morning': 0, 'in the evening': 12, 'in the afternoon': 12}
         # parts to cut out of the spoken command
@@ -35,7 +35,6 @@ def set_alarm(cmdt):
             if suf in cmdt:
                 hours += h
                 cuts.append(suf)
-                break
         return hours, minutes, cuts
 
     def get_date():
@@ -86,8 +85,7 @@ def set_alarm(cmdt):
         # removing unnecessary parts of string
         s = cmdt
         for cut in cuts:
-            if cut:
-                s = s.replace(cut, ' ')
+            s = s.replace(cut, ' ')
         return s
 
     def get_label():
@@ -100,7 +98,7 @@ def set_alarm(cmdt):
         return label.strip()
 
     label = get_label()
-    cmdt = cut_command(['set an alarm for', label, 'called', '-'])
+    cmdt = cut_command(['set an alarm for', label, 'called'])
     hours, minutes, cuts = get_daytime()
     cuts.extend(['st of','nd of', 'th of'])
     cmdt = cut_command(cuts)
@@ -111,7 +109,6 @@ def set_alarm(cmdt):
     payload = {'type':'alarm', 'data': data}
     send_data(payload)
 
-
 def take_note(command_text):
     # function to take a note
     data = command_text.replace('take a note', '')
@@ -119,36 +116,65 @@ def take_note(command_text):
     payload = {'type':'note', 'data': data}
     send_data(payload)
 
+#sends collected data to the server
 def send_data(data):
-    print("Sending")
+    global connection
     if connection is not None:
-        is_successful = connection.send(data)
+        try:
+            is_successful = connection.send(data)
+            print("Sending")
+        except:
+            print("SOCKET PING FAILED")
         if not is_successful:
             connection.close()
             print("Restarting connection...")
+            connect_server()
+    else:
+        print("Server is disconnected")
 
-
+#connects application to the server
 def connect_server():
+    global connection
     while True:
         HOST = "127.0.0.1"
         PORT = 22222
         connection = ConnectionHandlerClient(HOST, PORT)
         if not connection.connect():
-            print("System could not connect to the server.")
+            connection = None
+            print("System could not connect to the server. Waiting 10s...")
+            time.sleep(10)
         else:
+            print("Connected")
             return
 
+#sends server 1 byte payload every 5s to make sure it is still connected
+def ping_server():
+    global connection
+    while True:
+        if connection is None:
+            return False
+        try:
+            is_sent = connection.ping()
+        except:
+            print("SOCKET PING FAILED")
+            return
+        if not is_sent:
+            print("PING FAILED. RESTARTING...")
+            connect_server()
+        else:
+            print("PING SUCCESS")
+        time.sleep(5)
 
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
-HOST = "127.0.0.1"
-PORT = 22222
-connection = ConnectionHandlerClient(HOST, PORT) 
-print(connection.connect())
+connect_server()
+t_ping = threading.Thread(target=ping_server, args=())
+t_ping.daemon = True
+t_ping.start()
 while True:
     try:
         with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=0.5)
+            r.adjust_for_ambient_noise(source, duration=0.2)
             print("Listening...")
             audio = r.listen(source)
             print("Got it...")
