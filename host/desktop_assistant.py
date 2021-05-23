@@ -395,6 +395,7 @@ def ping_client(window):
             return
         if not is_sent:
             print('PING FAILED')
+            window.popup_connection_failed.emit(0)
             reload_server(window)
         print('PING SUCCESS')
         time.sleep(5)
