@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import speech_recognition as sr
-import json, socket, time, threading
+import json, socket, time, threading, subprocess
 from ConnectionHandlerClient import ConnectionHandlerClient
 
 global connection
@@ -187,6 +187,7 @@ while True:
                     recognizedCommand = True
                     fun(text)
             if not recognizedCommand:
+                subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
                 print("Command unrecognised, please try again.")
     except sr.RequestError as e:
         print("Error: ", e)

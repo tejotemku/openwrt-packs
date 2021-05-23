@@ -401,10 +401,16 @@ def reload_server(window):
         return True
     return False
 
+def t_start_server():
+    server_start()
+
 app = QApplication(sys.argv)
 w = Window()
 w.start()
-server_start()
+#server_start()
+t_server_start = threading.Thread(target=t_start_server, args=())
+t_server_start.daemon = True
+t_server_start.start()
 t_ping = threading.Thread(target=ping_client, args=(w,))
 t_ping.daemon = True
 t_ping.start()
