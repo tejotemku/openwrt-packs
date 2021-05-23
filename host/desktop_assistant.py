@@ -32,7 +32,7 @@ class Window(QMainWindow):
             self.setStyleSheet(open('style.qss', 'r').read())
         except:
             raise Exception('style.qss not found')
-        
+
         frame = QFrame()
         self.setCentralWidget(frame)
         menu_layout = QtWidgets.QHBoxLayout(frame)
@@ -369,7 +369,7 @@ def collect_data(func_add_alarm, func_add_note):
                     func_add_note.emit(data)
                 elif type == 'alarm':
                     func_add_alarm.emit(data)
-                    
+
 def server_start():
     # starts new server socket
     global server
@@ -394,10 +394,13 @@ def ping_client(window):
             print('SOCKET PING FAILED')
             return
         if not is_sent:
-            print('PING FAILED')
+            print("PING FAILED")
+            window.server_not_connected()
             window.popup_connection_failed.emit(0)
             reload_server(window)
-        print('PING SUCCESS')
+        else:
+            print("PING SUCCESS")
+            window.server_connected()
         time.sleep(5)
 
 def reload_server(window):
@@ -408,10 +411,16 @@ def reload_server(window):
         return True
     return False
 
+def t_start_server():
+    server_start()
+
 app = QApplication(sys.argv)
 w = Window()
 w.start()
-server_start()
+#server_start()
+t_server_start = threading.Thread(target=t_start_server, args=())
+t_server_start.daemon = True
+t_server_start.start()
 t_ping = threading.Thread(target=ping_client, args=(w,))
 t_ping.daemon = True
 t_ping.start()
