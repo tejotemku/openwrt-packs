@@ -25,6 +25,9 @@ class Window(QMainWindow):
         self.alarms, self.notes = self.load_data()
         self.save_data()
 
+        # setting up connection
+        self.disconnection_informed = False
+
         # generating window and loading style sheet
         self.setGeometry(200, 200, 960, 720)
         self.setWindowTitle('Desktop Assistant')
@@ -242,11 +245,13 @@ class Window(QMainWindow):
     def server_connected(self):
          # changing server connection indicator to green
         self.server_connection_indicator.setStyleSheet('color: green')
+        self.disconnection_informed = False
 
     def connection_failed_popup(self, i):
         # popup message that informs user about losing connection to client
-        QtWidgets.QMessageBox.about(self, 'Connection Error', 'You have been disconnected from client.')
-
+        if not self.disconnection_informed:
+            QtWidgets.QMessageBox.about(self, 'Connection Error', 'You have been disconnected from client.')
+            self.disconnection_informed = True
 
 
 
