@@ -29,7 +29,7 @@ class Window(QMainWindow):
             self.setStyleSheet(open("style.qss", "r").read())
         except:
             raise Exception('style.qss not found')
-        
+
         frame = QFrame()
         self.setCentralWidget(frame)
         menu_layout = QtWidgets.QHBoxLayout(frame)
@@ -236,7 +236,7 @@ class Window(QMainWindow):
         self.server_connection_indicator.setStyleSheet("color: #800000")
 
     def server_connected(self):
-         # changing server connection indicator to green
+        # changing server connection indicator to green
         self.server_connection_indicator.setStyleSheet("color: green")
 
 
@@ -386,8 +386,11 @@ def ping_client(window):
             return
         if not is_sent:
             print("PING FAILED")
+            window.server_not_connected()
             reload_server(window)
-        print("PING SUCCESS")
+        else:
+            print("PING SUCCESS")
+            window.server_connected()
         time.sleep(5)
 
 # responsible for reloading server after connection was lost

@@ -85,7 +85,8 @@ def set_alarm(cmdt):
         # removing unnecessary parts of string
         s = cmdt
         for cut in cuts:
-            s = s.replace(cut, ' ')
+            if cut:
+                s = s.replace(cut, ' ')
         return s
 
     def get_label():
