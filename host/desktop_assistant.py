@@ -10,10 +10,13 @@ global server
 server = None
 
 class Window(QMainWindow):
+    # Cutom QMainWindow class that creates desktop assistant gui
     popup_alarm_signal = pyqtSignal(str)
     remove_signal = pyqtSignal(int)
     add_alarm_signal = pyqtSignal(dict)
     add_note_signal = pyqtSignal(str)
+    popup_connection_failed = pyqtSignal(int)
+
 
     def __init__(self, *args, **kwargs):
         super(QMainWindow, self).__init__(*args, **kwargs)
@@ -24,9 +27,9 @@ class Window(QMainWindow):
 
         # generating window and loading style sheet
         self.setGeometry(200, 200, 960, 720)
-        self.setWindowTitle("Asystent Desktopowy")
+        self.setWindowTitle('Desktop Assistant')
         try:
-            self.setStyleSheet(open("style.qss", "r").read())
+            self.setStyleSheet(open('style.qss', 'r').read())
         except:
             raise Exception('style.qss not found')
         
@@ -35,10 +38,10 @@ class Window(QMainWindow):
         menu_layout = QtWidgets.QHBoxLayout(frame)
         # menu and content frame in window space
         self.menu = QFrame()
-        self.menu.setStyleSheet("padding: 0px; margin: 0px")
+        self.menu.setStyleSheet('padding: 0px; margin: 0px')
         self.menu.setMaximumHeight(self.height())
         self.content_frame = QFrame()
-        self.content_frame.setStyleSheet("background-color: #e8ebd1")
+        self.content_frame.setStyleSheet('background-color: #e8ebd1')
         self.content = QFrame()
         content_frame_layout = QtWidgets.QVBoxLayout(self.content_frame)
         content_frame_layout.addWidget(self.content)
@@ -48,20 +51,20 @@ class Window(QMainWindow):
         # MENU
         menu_layout = QtWidgets.QVBoxLayout(self.menu)
         # notes
-        self.note_list_widget = MenuOptionHiddenList(self, "notes", self.notes, "Notes", self.display_notes)
+        self.note_list_widget = MenuOptionHiddenList(self, 'notes', self.notes, 'Notes', self.display_notes)
         menu_layout.addWidget(self.note_list_widget, 1)
         # alarms
-        self.alarm_list_widget = MenuOptionHiddenList(self, "alarms",self.alarms, "Alarms", self.display_alarms)
+        self.alarm_list_widget = MenuOptionHiddenList(self, 'alarms',self.alarms, 'Alarms', self.display_alarms)
         menu_layout.addWidget(self.alarm_list_widget, 1)
         menu_layout.addStretch()
         # server connection indicator
         indicator_layout_frame = QFrame()
         indicator_layout = QtWidgets.QHBoxLayout(indicator_layout_frame)
-        server_connection_label = QLabel("Server connection status: ")
+        server_connection_label = QLabel('Server connection status: ')
         self.server_connection_indicator = QLabel()
         font = QFont('Times', 18)
         self.server_connection_indicator.setFont(font)
-        self.server_connection_indicator.setText("⬤")
+        self.server_connection_indicator.setText('⬤')
         indicator_layout.addWidget(server_connection_label)
         indicator_layout.addWidget(self.server_connection_indicator)
         menu_layout.addWidget(indicator_layout_frame)
@@ -77,7 +80,7 @@ class Window(QMainWindow):
         content_layout.addWidget(self.content_label, 100)
         content_layout.addStretch()
         # deleting alarms or notes
-        self.remove_button = QPushButton("Delete")
+        self.remove_button = QPushButton('Delete')
         self.remove_button.clicked.connect(self.remove_selected)
         content_layout.addWidget(self.remove_button, 1)
 
@@ -91,6 +94,7 @@ class Window(QMainWindow):
         self.remove_signal[int].connect(self.remove_alarm)
         self.add_alarm_signal[dict].connect(self.add_alarm)
         self.add_note_signal[str].connect(self.add_note)
+        self.popup_connection_failed[int].connect(self.connection_failed_popup)
         # background clock thread
         self.start_clock()
         # data collection thread
@@ -129,14 +133,14 @@ class Window(QMainWindow):
         self.displayed_info_type = 'alarm'
         alarm = self.alarms[id]['date']
         alarm_label= self.alarms[id]['label']
-        self.content_label.setText(f"ALARM: \n\ntytuł: {alarm_label}\ndzień - {alarm.day:02d}.{alarm.month:02d}\
-.{alarm.year}\ngodzina - {alarm.hour:02d}:{alarm.minute:02d}")
+        self.content_label.setText(f'ALARM: \n\ntitle: {alarm_label}\nday - {alarm.day:02d}.{alarm.month:02d}\
+.{alarm.year}\nhour - {alarm.hour:02d}:{alarm.minute:02d}')
         self.content.show()
 
     def display_notes(self, id):
         # displaying a note in content frame
         self.displayed_info_type = 'note'
-        self.content_label.setText(f"NOTATKA: \n\n{self.notes[id]}")
+        self.content_label.setText(f'NOTE: \n\n{self.notes[id]}')
         self.content.show()
 
 
@@ -174,22 +178,22 @@ class Window(QMainWindow):
         self.collector_thread.start()
 
     def add_alarm(self, data):
-        # reating a alarm and saving to file
-        onlyHour = False
+        # creating a alarm and saving to file
+        invalid_date = False
         year = data['year']
         month = data['month']
         day = data['day']
         hours = data['hours']
         minutes = data['minutes']
         label = data['label']
-        if month == None:
-            onlyHour = True
+        if year == None or month == None or day == None:
+            invalid_date = True
             today = dt.today()
             year = today.year
             month = today.month
             day = today.day
         new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
-        if onlyHour and new_date < dt.today():
+        if invalid_date and new_date < dt.today():
             new_date += timedelta(days=1)
         if label == None:
             label = str(new_date)
@@ -228,16 +232,21 @@ class Window(QMainWindow):
 
     def hide_content(self):
         # clearing the content
-        self.content_label.setText("")
+        self.content_label.setText('')
         self.content.hide()
 
     def server_not_connected(self):
         # changing server connection indicator to red
-        self.server_connection_indicator.setStyleSheet("color: #800000")
+        self.server_connection_indicator.setStyleSheet('color: #800000')
 
     def server_connected(self):
          # changing server connection indicator to green
-        self.server_connection_indicator.setStyleSheet("color: green")
+        self.server_connection_indicator.setStyleSheet('color: green')
+
+    def connection_failed_popup(self, i):
+        # popup message that informs user about losing connection to client
+        QtWidgets.QMessageBox.about(self, 'Connection Error', 'You have been disconnected from client.')
+
 
 
 
@@ -254,7 +263,7 @@ class MenuOptionHiddenList(QtWidgets.QFrame):
         self.items_list.itemClicked.connect(self.items_list.clicked)
         self.fill_list()
         self.setAttribute(Qt.WA_Hover)
-        self.items_list.setStyleSheet("background-color: transparent; border: none")
+        self.items_list.setStyleSheet('background-color: transparent; border: none')
         self.layout.addWidget(self.items_btn)
         self.layout.addWidget(self.items_list)
         self.layout.addStretch()
@@ -341,8 +350,8 @@ def clock(func_popup, func_remove, alarm_list):
         except:
             pass
 
-#main data collection from the client
 def collect_data(func_add_alarm, func_add_note):
+    # main data collection from the client
     global server
     while True:
         if server is not None and server.get_connection() is not None:
@@ -352,29 +361,29 @@ def collect_data(func_add_alarm, func_add_note):
                 exit()
             print(received_data)
             if received_data == {}:
-                print("CLIENT-PING SUCCESS")
+                print('CLIENT-PING SUCCESS')
             if 'type' in received_data and 'data' in received_data:
-                type = received_data["type"]
-                data = received_data["data"]
+                type = received_data['type']
+                data = received_data['data']
                 if type == 'note':
                     func_add_note.emit(data)
                 elif type == 'alarm':
                     func_add_alarm.emit(data)
-
-#starts new server socket
+                    
 def server_start():
+    # starts new server socket
     global server
     HOST = '127.0.0.1'
     PORT = 22222
-    print("Starting server...")
+    print('Starting server...')
     if server is None:
         server = ConnectionHandlerServer(HOST, PORT)
     is_started, addr = server.start()
     print('Connected with: ', addr)
     return is_started
 
-#sends client 1 byte payload every 5s to make sure it is still connected
 def ping_client(window):
+    # sends client 1 byte payload every 5s to make sure it is still connected
     global server
     while True:
         if server is None:
@@ -382,18 +391,18 @@ def ping_client(window):
         try:
             is_sent = server.ping()
         except:
-            print("SOCKET PING FAILED")
+            print('SOCKET PING FAILED')
             return
         if not is_sent:
-            print("PING FAILED")
+            print('PING FAILED')
             reload_server(window)
-        print("PING SUCCESS")
+        print('PING SUCCESS')
         time.sleep(5)
 
-# responsible for reloading server after connection was lost
 def reload_server(window):
+    # responsible for reloading server after connection was lost
     if server_start():
-        print("Server restarted")
+        print('Server restarted')
         window.restart_collector()
         return True
     return False

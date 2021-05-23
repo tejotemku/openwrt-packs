@@ -122,29 +122,29 @@ def send_data(data):
     if connection is not None:
         try:
             is_successful = connection.send(data)
-            print("Sending")
+            print('Sending')
         except:
-            print("SOCKET PING FAILED")
+            print('SOCKET PING FAILED')
         if not is_successful:
             connection.close()
-            print("Restarting connection...")
+            print('Restarting connection...')
             connect_server()
     else:
-        print("Server is disconnected")
+        print('Server is disconnected')
 
 #connects application to the server
 def connect_server():
     global connection
     while True:
-        HOST = "127.0.0.1"
+        HOST = '127.0.0.1'
         PORT = 22222
         connection = ConnectionHandlerClient(HOST, PORT)
         if not connection.connect():
             connection = None
-            print("System could not connect to the server. Waiting 10s...")
+            print('System could not connect to the server. Waiting 10s...')
             time.sleep(10)
         else:
-            print("Connected")
+            print('Connected')
             return
 
 #sends server 1 byte payload every 5s to make sure it is still connected
@@ -156,13 +156,13 @@ def ping_server():
         try:
             is_sent = connection.ping()
         except:
-            print("SOCKET PING FAILED")
+            print('SOCKET PING FAILED')
             return
         if not is_sent:
-            print("PING FAILED. RESTARTING...")
+            print('PING FAILED. RESTARTING...')
             connect_server()
         else:
-            print("PING SUCCESS")
+            print('PING SUCCESS')
         time.sleep(5)
 
 r = sr.Recognizer()
@@ -175,19 +175,19 @@ while True:
     try:
         with sr.Microphone() as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
-            print("Listening...")
+            print('Listening...')
             audio = r.listen(source)
-            print("Got it...")
+            print('Got it...')
             text = r.recognize_google(audio)
-            print(f"You said: {text}")
+            print(f'You said: {text}')
             recognizedCommand = False
             for c, fun in commands.items():
                 if c in text:
                     recognizedCommand = True
                     fun(text)
             if not recognizedCommand:
-                print("Command unrecognised, please try again.")
+                print('Command unrecognised, please try again.')
     except sr.RequestError as e:
-        print("Error: ", e)
+        print('Error: ', e)
     except sr.UnknownValueError:
         pass
