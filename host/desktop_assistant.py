@@ -26,7 +26,7 @@ class Window(QMainWindow):
         self.save_data()
 
         # setting up connection
-        self.disconnection_informed = False
+        self.disconnection_informed = True
 
         # generating window and loading style sheet
         self.setGeometry(200, 200, 960, 720)
@@ -176,7 +176,7 @@ class Window(QMainWindow):
 
     def restart_collector(self):
         self.collector_thread = None
-        self.collector_thread =threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
+        self.collector_thread = threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
         self.collector_thread.daemon = True
         self.collector_thread.start()
 
@@ -252,8 +252,6 @@ class Window(QMainWindow):
         if not self.disconnection_informed:
             QtWidgets.QMessageBox.about(self, 'Connection Error', 'You have been disconnected from client.')
             self.disconnection_informed = True
-
-
 
 class MenuOptionHiddenList(QtWidgets.QFrame):
     # custom list viewer
@@ -363,10 +361,12 @@ def collect_data(func_add_alarm, func_add_note):
             try:
                 received_data = server.receive()
             except:
-                exit()
+                print('Failed to receive data. Please wait...')
+                return
             print(received_data)
             if received_data == {}:
                 print('CLIENT-PING SUCCESS')
+                continue
             if 'type' in received_data and 'data' in received_data:
                 type = received_data['type']
                 data = received_data['data']
@@ -383,7 +383,8 @@ def server_start():
     print('Starting server...')
     if server is None:
         server = ConnectionHandlerServer(HOST, PORT)
-    is_started, addr = server.start()
+        server.start()
+    is_started, addr = server.listen_and_accept()
     print('Connected with: ', addr)
     return is_started
 
@@ -391,21 +392,20 @@ def ping_client(window):
     # sends client 1 byte payload every 5s to make sure it is still connected
     global server
     while True:
-        if server is None:
-            return False
-        try:
-            is_sent = server.ping()
-        except:
-            print('SOCKET PING FAILED')
-            return
-        if not is_sent:
-            print("PING FAILED")
-            window.server_not_connected()
-            window.popup_connection_failed.emit(0)
-            reload_server(window)
-        else:
-            print("PING SUCCESS")
-            window.server_connected()
+        if server is not None and server.get_connection() is not None:
+            try:
+                is_sent = server.ping()
+            except:
+                print('SOCKET PING FAILED')
+                return
+            if not is_sent:
+                print("PING FAILED")
+                window.server_not_connected()
+                window.popup_connection_failed.emit(0)
+                reloaded = reload_server(window)
+            else:
+                print("PING SUCCESS")
+                window.server_connected()
         time.sleep(5)
 
 def reload_server(window):
@@ -417,12 +417,13 @@ def reload_server(window):
     return False
 
 def t_start_server():
+    # responsible for starting server the first time
     server_start()
+    return
 
 app = QApplication(sys.argv)
 w = Window()
 w.start()
-#server_start()
 t_server_start = threading.Thread(target=t_start_server, args=())
 t_server_start.daemon = True
 t_server_start.start()

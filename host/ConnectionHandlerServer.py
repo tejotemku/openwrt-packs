@@ -19,15 +19,22 @@ class ConnectionHandlerServer:
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.settimeout(None)
             self.__socket.bind((self.__host, self.__port))
+        except:
+            return False
+        return True
+
+    def listen_and_accept(self):
+        try:
+            self.__mutex_send = threading.Lock()
+            self.__mutex_recv = threading.Lock()
             while True:
                 print("Listening for client (30s)...")
                 self.__socket.listen(30)
                 self.__connection, addr = self.__socket.accept()
                 if addr is not None:
-                    break
+                    return True, addr
         except:
             return False, 'No address'
-        return True, addr
 
     def get_connection(self):
         return self.__connection

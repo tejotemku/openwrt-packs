@@ -9,6 +9,7 @@ class ConnectionHandlerClient:
         self.__socket = None
         self.__serializer = JsonSerializer()
         self.__mutex_send = threading.Lock()
+        self.__mutex_recv = threading.Lock()
 
     #Creates socket connection
     def connect(self):
