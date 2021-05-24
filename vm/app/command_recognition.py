@@ -106,6 +106,8 @@ def set_alarm(cmdt):
     day, month, year, cuts = get_date()
     cmdt = cut_command(cuts)
 
+    no_year = False
+    invalid_date = False
     if month == None or day == None:
         invalid_date = True
         today = dt.today()
@@ -122,8 +124,15 @@ def set_alarm(cmdt):
         return
     if invalid_date and new_date < dt.today():
         new_date += timedelta(days=1)
+        day = new_date.day
+        month = new_date.month
+        year = new_date.year
     if no_year and new_date < dt.today():
+        print('wrong year')
         new_date += timedelta(days=365)
+        day = new_date.day
+        month = new_date.month
+        year = new_date.year
 
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
@@ -141,6 +150,7 @@ def take_note(command_text):
     print('Empty note, please try again')
 
 def send_data(data):
+    return 
     # sends collected data to the server
     global connection
     if connection is not None:
@@ -192,10 +202,10 @@ def ping_server():
 
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
-connect_server()
-t_ping = threading.Thread(target=ping_server, args=())
-t_ping.daemon = True
-t_ping.start()
+# connect_server()
+# t_ping = threading.Thread(target=ping_server, args=())
+# t_ping.daemon = True
+# t_ping.start()
 while True:
     try:
         with sr.Microphone() as source:
