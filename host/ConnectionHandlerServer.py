@@ -13,8 +13,8 @@ class ConnectionHandlerServer:
         self.__mutex_send = threading.Lock()
         self.__mutex_recv = threading.Lock()
 
-    #Creates socket connection
     def start(self):
+        # Creates socket connection
         try:
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.settimeout(None)
@@ -24,6 +24,7 @@ class ConnectionHandlerServer:
         return True
 
     def listen_and_accept(self):
+        # Enables listening for new clients and accepts them
         try:
             self.__mutex_send = threading.Lock()
             self.__mutex_recv = threading.Lock()
@@ -37,10 +38,11 @@ class ConnectionHandlerServer:
             return False, 'No address'
 
     def get_connection(self):
+        # Returns server's connection
         return self.__connection
 
-    #Closes socket connection
     def close(self):
+        # Closes socket connection
         if self.__socket is not None:
             try:
                 self.__socket.close()
@@ -51,6 +53,7 @@ class ConnectionHandlerServer:
         return False
 
     def send(self, data):
+        # Sends data to the client
         if self.__connection is None:
             return False, "No socket specified"
         data_serialized = self.__serializer.serialize(data)
@@ -66,6 +69,7 @@ class ConnectionHandlerServer:
         return True
 
     def receive(self):
+        # Handles receiving new data from the client
         try:
             with self.__mutex_recv:
                 count = SocketHandler.read_len(self.__connection)
@@ -78,9 +82,10 @@ class ConnectionHandlerServer:
             raise BrokenPipeError('conn lost')
 
     def ping(self):
+        # Sends loose header to check the connection with the client
         if self.__connection is None:
             return False
-        payload_length = 1
+        payload_length = 1 # to recognize ping easily
         payload = SocketHandler.encodeBytes(payload_length)
         try:
             with self.__mutex_send:

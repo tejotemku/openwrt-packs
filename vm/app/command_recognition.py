@@ -148,6 +148,7 @@ def take_note(command_text):
         send_data(payload)
         return
     print('Empty note, please try again')
+    play_error_tone()
 
 def send_data(data):
     # sends collected data to the server
@@ -180,8 +181,15 @@ def connect_server():
             print('Connected')
             return
 
+def play_error_tone():
+    # plays tone when some error occured
+    try:
+        subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
+    except:
+        print("play cmd failed")
+
 def ping_server():
-    #sends server 1 byte payload every 5s to make sure it is still connected
+    # sends server loose header every 5s to make sure it is still connected
     global connection
     while True:
         if connection is None:
@@ -220,10 +228,7 @@ while True:
                     recognizedCommand = True
                     fun(text)
             if not recognizedCommand:
-                try:
-                    subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
-                except:
-                    print("play cmd failed")
+                play_error_tone()
                 print("Command unrecognised, please try again.")
     except sr.RequestError as e:
         print('Error: ', e)

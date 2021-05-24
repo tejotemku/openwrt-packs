@@ -4,25 +4,20 @@ START=91
 STOP=91
 
 start() {
-	echo 'Getting pyaudio'
-	FILE=/root/aud/PyAudio-0.2.11
-	if [ -d "$FILE" ]; then
-		echo 'Directory already exists' > /root/aud/exists.txt
-	else
+	echo 'Getting PyAudio'
+	python3 -c "import pyaudio"
+	if [ "$?" -ne 0 ] 
+	then
 		cd /usr/lib/
 		ln -s libportaudio.so.2.0.0 libportaudio.so
-		cd /root/
-		wget https://files.pythonhosted.org/packages/ab/42/b4f04721c5c5bfc196ce156b3c768998ef8c0ae3654ed29ea5020c749a6b/PyAudio-0.2.11.tar.gz
-		mkdir /root/aud
-		tar -xzf PyAudio-0.2.11.tar.gz -C /root/aud/
-		cd /root/aud/PyAudio-0.2.11/src/
-		wget https://raw.githubusercontent.com/EddieRingle/portaudio/master/include/portaudio.h
 		cd /root/aud/PyAudio-0.2.11/
 		python3 setup.py build
 		python3 setup.py install
-	fi	
-}
+	else
+		echo 'Already installed' > /root/aud/exists.txt
+	fi
 
+}
 stop() {
 	echo "PyAudio OFF"
 }

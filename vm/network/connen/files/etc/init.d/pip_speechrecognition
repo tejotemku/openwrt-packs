@@ -8,7 +8,7 @@ start() {
 	python3 -c "import speech_recognition"
 	if [ "$?" -ne 0 ] 
 	then
-		pip3 install SpeechRecognition
+		pip3 install /root/sr/SpeechRecognition-3.8.1-py2.py3-none-any.whl
 	else
 		echo 'Already installed' > /root/sr.txt
 	fi

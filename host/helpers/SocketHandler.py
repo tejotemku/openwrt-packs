@@ -15,7 +15,6 @@ class SocketHandler:
         while count > 0:
             received = socket.recv(count)
             if not received or len(received) == 0:
-                # raise BrokenPipeError("socket disconnected")
                 pass
             buffer += received
             count -= len(received)
