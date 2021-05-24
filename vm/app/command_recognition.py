@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime as dt, timedelta
 import speech_recognition as sr
 import json, socket, time, threading, subprocess
 from ConnectionHandlerClient import ConnectionHandlerClient
@@ -46,7 +46,7 @@ def set_alarm(cmdt):
         # get today's or tommorows date
         for sub, offset in date_substitues.items():
             if sub in cmdt:
-                today = datetime.today()
+                today = dt.today()
                 today += timedelta(days=offset)
                 day = today.day
                 month = today.month
@@ -99,12 +99,32 @@ def set_alarm(cmdt):
         return label.strip()
 
     label = get_label()
-    cmdt = cut_command(['set an alarm for', label, 'called'])
+    cmdt = cut_command(['set an alarm for', label, 'called', '-'])
     hours, minutes, cuts = get_daytime()
     cuts.extend(['st of','nd of', 'th of'])
     cmdt = cut_command(cuts)
     day, month, year, cuts = get_date()
     cmdt = cut_command(cuts)
+
+    if month == None or day == None:
+        invalid_date = True
+        today = dt.today()
+        year = today.year
+        month = today.month
+        day = today.day
+    elif year == None:
+        year = dt.today().year
+        no_year = True
+    try:
+        new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
+    except:
+        print('Invalid date, please try again')
+        return
+    if invalid_date and new_date < dt.today():
+        new_date += timedelta(days=1)
+    if no_year and new_date < dt.today():
+        new_date += timedelta(days=365)
+
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
     payload = {'type':'alarm', 'data': data}
@@ -114,8 +134,11 @@ def take_note(command_text):
     # function to take a note
     data = command_text.replace('take a note', '')
     data = data.strip()
-    payload = {'type':'note', 'data': data}
-    send_data(payload)
+    if data != '':
+        payload = {'type':'note', 'data': data}
+        send_data(payload)
+        return
+    print('Empty note, please try again')
 
 def send_data(data):
     # sends collected data to the server
