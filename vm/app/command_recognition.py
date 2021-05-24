@@ -104,6 +104,12 @@ def set_alarm(cmdt):
     cuts.extend(['st of','nd of', 'th of'])
     cmdt = cut_command(cuts)
     day, month, year, cuts = get_date()
+
+    try:
+        check_date = datetime(year=year, month=month, day=day, hour=hours, minute=minutes)
+    except ValueError:
+        play_error_tone()
+        return
     cmdt = cut_command(cuts)
     print(f'{hours:02d}:{minutes:02d}\nday: {day}\nmonth: {month}\nyear: {year}\nlabel: {label}')
     data = {'year': year, 'month': month, 'day': day, 'hours': hours, 'minutes': minutes, 'label': label}
@@ -114,6 +120,8 @@ def take_note(command_text):
     # function to take a note
     data = command_text.replace('take a note', '')
     data = data.strip()
+    if data == "":
+        return
     payload = {'type':'note', 'data': data}
     send_data(payload)
 
@@ -148,8 +156,15 @@ def connect_server():
             print('Connected')
             return
 
+def play_error_tone():
+    # plays tone when some error occured
+    try:
+        subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
+    except:
+        print("play cmd failed")
+
 def ping_server():
-    #sends server 1 byte payload every 5s to make sure it is still connected
+    # sends server loose header every 5s to make sure it is still connected
     global connection
     while True:
         if connection is None:
@@ -188,10 +203,7 @@ while True:
                     recognizedCommand = True
                     fun(text)
             if not recognizedCommand:
-                try:
-                    subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
-                except:
-                    print("play cmd failed")
+                play_error_tone()
                 print("Command unrecognised, please try again.")
     except sr.RequestError as e:
         print('Error: ', e)

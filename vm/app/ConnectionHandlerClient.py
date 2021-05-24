@@ -11,8 +11,8 @@ class ConnectionHandlerClient:
         self.__mutex_send = threading.Lock()
         self.__mutex_recv = threading.Lock()
 
-    #Creates socket connection
     def connect(self):
+        # Creates socket connection
         try:
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.connect((self.__host, self.__port))
@@ -20,8 +20,8 @@ class ConnectionHandlerClient:
             return False
         return True
 
-    #Closes socket connection
     def close(self):
+        # Closes socket connection
         if self.__socket is not None:
             try:
                 self.__socket.close()
@@ -32,6 +32,7 @@ class ConnectionHandlerClient:
         return False
 
     def send(self, data):
+        # Sends data to the server
         if self.__socket is None:
             return False, "No socket specified"
         data_serialized = self.__serializer.serialize(data)
@@ -46,11 +47,11 @@ class ConnectionHandlerClient:
             return False
         return True
 
-    #Returns whether ping was successful
     def ping(self):
+        # Sends loose header to check the connection with the server
         if self.__socket is None:
             return False
-        payload_length = 1
+        payload_length = 1 # to recognize ping easily
         payload = SocketHandler.encodeBytes(payload_length)
         try:
             with self.__mutex_send:

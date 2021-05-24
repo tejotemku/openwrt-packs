@@ -10,7 +10,7 @@ global server
 server = None
 
 class Window(QMainWindow):
-    # Cutom QMainWindow class that creates desktop assistant gui
+    # Custom QMainWindow class that creates desktop assistant gui
     popup_alarm_signal = pyqtSignal(str)
     remove_signal = pyqtSignal(int)
     add_alarm_signal = pyqtSignal(dict)
@@ -174,11 +174,6 @@ class Window(QMainWindow):
         self.collector_thread.daemon = True
         self.collector_thread.start()
 
-    def restart_collector(self):
-        self.collector_thread = None
-        self.collector_thread = threading.Thread(target=collect_data, args=(self.add_alarm_signal, self.add_note_signal, ))
-        self.collector_thread.daemon = True
-        self.collector_thread.start()
 
     def add_alarm(self, data):
         # creating a alarm and saving to file
@@ -199,7 +194,10 @@ class Window(QMainWindow):
         elif year == None:
             year = dt.today().year
             no_year = True
-        new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
+        try:
+            new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
+        except:
+            return
         if invalid_date and new_date < dt.today():
             new_date += timedelta(days=1)
         if no_year and new_date < dt.today():
@@ -418,7 +416,7 @@ def reload_server(window):
     # responsible for reloading server after connection was lost
     if server_start():
         print('Server restarted')
-        window.restart_collector()
+        window.start_collector()
         return True
     return False
 
