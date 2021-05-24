@@ -150,7 +150,6 @@ def take_note(command_text):
     print('Empty note, please try again')
 
 def send_data(data):
-    return 
     # sends collected data to the server
     global connection
     if connection is not None:
@@ -202,10 +201,10 @@ def ping_server():
 
 r = sr.Recognizer()
 commands = {'set an alarm for': set_alarm, 'take a note': take_note}
-# connect_server()
-# t_ping = threading.Thread(target=ping_server, args=())
-# t_ping.daemon = True
-# t_ping.start()
+connect_server()
+t_ping = threading.Thread(target=ping_server, args=())
+t_ping.daemon = True
+t_ping.start()
 while True:
     try:
         with sr.Microphone() as source:
