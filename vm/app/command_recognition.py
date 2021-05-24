@@ -104,7 +104,6 @@ def set_alarm(cmdt):
     cuts.extend(['st of','nd of', 'th of'])
     cmdt = cut_command(cuts)
     day, month, year, cuts = get_date()
-
     try:
         check_date = datetime(year=year, month=month, day=day, hour=hours, minute=minutes)
     except ValueError:

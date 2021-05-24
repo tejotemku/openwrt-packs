@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+
+START=93
+STOP=93
+
+start() {
+	chmod 755 /root/start.sh
+	sh /root/start.sh &
+}
+
+stop() {
+	echo "App stop" 
+}
