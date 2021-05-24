@@ -2,9 +2,10 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QEvent, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QPushButton, QFrame
-import sys, threading, pickle, time
+import sys, threading, pickle, time, subprocess
 from datetime import datetime as dt, timedelta
 from ConnectionHandlerServer import ConnectionHandlerServer
+from playsound import playsound
 
 global server
 server = None
@@ -114,6 +115,7 @@ class Window(QMainWindow):
 
     def popup_alarm(self, label:str=None):
         # creating a popup window with an alarm
+        self.play_alarm_sound()
         QtWidgets.QMessageBox.about(self, 'Alarm', label)
 
     def save_data(self):
@@ -238,6 +240,12 @@ class Window(QMainWindow):
         if not self.disconnection_informed:
             QtWidgets.QMessageBox.about(self, 'Connection Error', 'You have been disconnected from client.')
             self.disconnection_informed = True
+
+    def play_alarm_sound(self):
+        try:
+            subprocess.call(['play', 'alert.wav'])
+        except:
+            print('Failed to play alarm sound')
 
 class MenuOptionHiddenList(QtWidgets.QFrame):
     # custom list viewer

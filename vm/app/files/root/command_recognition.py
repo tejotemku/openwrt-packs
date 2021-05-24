@@ -101,7 +101,7 @@ def set_alarm(cmdt):
     label = get_label()
     cmdt = cut_command(['set an alarm for', label, 'called', '-'])
     hours, minutes, cuts = get_daytime()
-    cuts.extend(['st of','nd of', 'th of'])
+    cuts.extend(['st of','nd of', 'rd of', 'th of'])
     cmdt = cut_command(cuts)
     day, month, year, cuts = get_date()
     cmdt = cut_command(cuts)
@@ -170,7 +170,7 @@ def connect_server():
     #connects application to the server
     global connection
     while True:
-        HOST = '10.0.2.2'
+        HOST = '127.0.0.1'
         PORT = 22222
         connection = ConnectionHandlerClient(HOST, PORT)
         if not connection.connect():
@@ -215,7 +215,7 @@ t_ping.daemon = True
 t_ping.start()
 while True:
     try:
-        with sr.Microphone(device_index=0) as source:
+        with sr.Microphone() as source:
             r.adjust_for_ambient_noise(source, duration=0.2)
             print('Listening...')
             audio = r.listen(source)

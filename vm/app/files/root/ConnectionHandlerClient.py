@@ -3,6 +3,9 @@ from helpers.SocketHandler import SocketHandler
 from serializers.JsonSerializer import JsonSerializer
 
 class ConnectionHandlerClient:
+    """
+Class for creating and handling client socket with sending method
+    """
     def __init__(self, host, port):
         self.__host = host
         self.__port = port

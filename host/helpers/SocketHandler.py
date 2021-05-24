@@ -7,10 +7,12 @@ class SocketHandler:
     """
     @staticmethod
     def encodeBytes(value):
+        # Turns integer into string of 4 bytes
         return value.to_bytes(4, byteorder='big')
 
     @staticmethod
     def read_bytes(socket, count):
+        # Reads given amount of bytes from the socket
         buffer = b''
         while count > 0:
             received = socket.recv(count)
@@ -22,6 +24,7 @@ class SocketHandler:
 
     @staticmethod
     def write_bytes(socket, buffer):
+        # Writes given buffer to the socket
         count = len(buffer)
         total_written = 0
         while total_written < count:
@@ -32,6 +35,7 @@ class SocketHandler:
 
     @staticmethod
     def read_len(socket):
+        # Reads integer from the header in bytes
         value = 0
         count_bytes = 4
         while count_bytes > 0:
