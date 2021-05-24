@@ -182,28 +182,13 @@ class Window(QMainWindow):
 
     def add_alarm(self, data):
         # creating a alarm and saving to file
-        invalid_date = False
-        no_year = False
         year = data['year']
         month = data['month']
         day = data['day']
         hours = data['hours']
         minutes = data['minutes']
         label = data['label']
-        if month == None or day == None:
-            invalid_date = True
-            today = dt.today()
-            year = today.year
-            month = today.month
-            day = today.day
-        elif year == None:
-            year = dt.today().year
-            no_year = True
         new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
-        if invalid_date and new_date < dt.today():
-            new_date += timedelta(days=1)
-        if no_year and new_date < dt.today():
-            new_date += timedelta(days=365)
         if label == None:
             label = str(new_date)
         if self.alarms.keys():
