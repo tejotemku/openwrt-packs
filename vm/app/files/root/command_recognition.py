@@ -38,7 +38,7 @@ def set_alarm(cmdt):
         return hours, minutes, cuts
 
     def get_date():
-        date_substitues = {'today': 0, 'tommorow': 1}
+        date_substitues = {'today': 0, 'tomorrow': 1}
         cuts = []
         day = None
         month = None
@@ -47,7 +47,7 @@ def set_alarm(cmdt):
         for sub, offset in date_substitues.items():
             if sub in cmdt:
                 today = dt.today()
-                today += timedelta(days=offset)
+                today += timedelta(days=offset, hours=2)
                 day = today.day
                 month = today.month
                 year = today.year
