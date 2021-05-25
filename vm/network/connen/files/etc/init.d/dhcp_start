@@ -13,6 +13,8 @@ boot() {
 	uci commit
 	/etc/init.d/network restart
 	rm /etc/rc.d/S19dnsmasq
+	rm /etc/TZ
+	echo "CET-1CEST,M3.5.0,M10.5.0/3" > /etc/TZ
 }
 
 shutdown() {

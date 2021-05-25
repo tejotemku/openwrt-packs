@@ -121,6 +121,7 @@ def set_alarm(cmdt):
         new_date = dt(year=year, month=month, day=day, hour=hours, minute=minutes)
     except:
         print('Invalid date, please try again')
+        play_error_tone()
         return
     if invalid_date and new_date < dt.today():
         new_date += timedelta(days=1)
@@ -186,7 +187,7 @@ def play_error_tone():
     try:
         subprocess.call(['play', '-nq', '-t', 'alsa', 'synth', '0.3', 'sine', '240'])
     except:
-        print("play cmd failed")
+        print("Error sound failed")
 
 def ping_server():
     # sends server loose header every 5s to make sure it is still connected
@@ -203,8 +204,6 @@ def ping_server():
         if not is_sent:
             print('PING FAILED. RESTARTING...')
             connect_server()
-        else:
-            print('PING SUCCESS')
         time.sleep(5)
 
 r = sr.Recognizer()
