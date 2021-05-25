@@ -95,13 +95,13 @@ def set_alarm(cmdt):
         if index == -1:
             return None
         label = cmdt[index:]
-        label = label.replace('called', '')
+        label = label.replace('called', ' ')
         return label.strip()
 
     label = get_label()
     cmdt = cut_command(['set an alarm for', label, 'called', '-'])
     hours, minutes, cuts = get_daytime()
-    cuts.extend(['st of','nd of', 'rd of', 'th of'])
+    cuts.extend(['st ','nd ', 'rd ', 'th '])
     cmdt = cut_command(cuts)
     day, month, year, cuts = get_date()
     cmdt = cut_command(cuts)
