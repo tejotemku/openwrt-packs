@@ -115,8 +115,8 @@ class Window(QMainWindow):
 
     def popup_alarm(self, label:str=None):
         # creating a popup window with an alarm
-        QtWidgets.QMessageBox.about(self, 'Alarm', label)
         self.play_alarm_sound()
+        QtWidgets.QMessageBox.about(self, 'Alarm', label)
 
     def save_data(self):
         # saving data to file
