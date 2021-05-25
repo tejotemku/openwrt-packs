@@ -115,8 +115,8 @@ class Window(QMainWindow):
 
     def popup_alarm(self, label:str=None):
         # creating a popup window with an alarm
-        self.play_alarm_sound()
         QtWidgets.QMessageBox.about(self, 'Alarm', label)
+        self.play_alarm_sound()
 
     def save_data(self):
         # saving data to file
@@ -359,7 +359,6 @@ def collect_data(func_add_alarm, func_add_note):
                 return
             print(received_data)
             if received_data == {}:
-                print('CLIENT-PING SUCCESS')
                 continue
             if 'type' in received_data and 'data' in received_data:
                 type = received_data['type']
@@ -398,7 +397,6 @@ def ping_client(window):
                 window.popup_connection_failed.emit(0)
                 reloaded = reload_server(window)
             else:
-                print("PING SUCCESS")
                 window.server_connected()
         time.sleep(5)
 
